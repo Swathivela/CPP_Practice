@@ -1,0 +1,40 @@
+// main.cpp
+// Test program for HugeInt (demonstrates +, -, *, /, comparisons)
+#include <iostream>
+#include "HugeInt.h"
+using namespace std;
+
+int main()
+{
+    HugeInt a, b;
+    cout << "Enter first huge integer (decimal): ";
+    cin >> a;
+    cout << "Enter second huge integer (decimal): ";
+    cin >> b;
+
+    cout << "\nYou entered:\n";
+    cout << "a = " << a << "\n";
+    cout << "b = " << b << "\n\n";
+
+    cout << "a + b = " << (a + b) << "\n";
+    cout << "a - b = " << (a - b) << "  (if a < b result is 0 in this implementation)\n";
+    cout << "a * b = " << (a * b) << "  (product may be truncated if > "
+         << HugeInt::MAX_DIGITS << " digits)\n";
+
+    try {
+        HugeInt q = a / b;
+        cout << "a / b = " << q << " (integer division)\n";
+    } catch (const std::invalid_argument &e) {
+        cout << "Division error: " << e.what() << "\n";
+    }
+
+    cout << "\nComparisons:\n";
+    cout << "a == b ? " << (a == b ? "true" : "false") << "\n";
+    cout << "a != b ? " << (a != b ? "true" : "false") << "\n";
+    cout << "a < b  ? " << (a < b  ? "true" : "false") << "\n";
+    cout << "a <= b ? " << (a <= b ? "true" : "false") << "\n";
+    cout << "a > b  ? " << (a > b  ? "true" : "false") << "\n";
+    cout << "a >= b ? " << (a >= b ? "true" : "false") << "\n";
+
+    return 0;
+}

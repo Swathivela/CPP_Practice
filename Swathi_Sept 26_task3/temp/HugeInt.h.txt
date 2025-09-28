@@ -1,0 +1,46 @@
+// HugeInt.h
+// HugeInt class (fixed-size decimal digits) with overloaded operators.
+// Representation: MAX_DIGITS decimal digits, digits[0] = least-significant digit.
+
+#ifndef HUGEINT_H
+#define HUGEINT_H
+
+#include <iostream>
+#include <string>
+
+class HugeInt {
+    friend std::ostream &operator<<(std::ostream &, const HugeInt &);
+    friend std::istream &operator>>(std::istream &, HugeInt &);
+
+public:
+    static const int MAX_DIGITS = 30; // changeable limit
+
+    // constructors
+    HugeInt(long long value = 0);
+    HugeInt(const std::string &s);
+
+    // arithmetic
+    HugeInt operator+(const HugeInt &other) const;
+    HugeInt operator-(const HugeInt &other) const; // assumes *this >= other; otherwise result is 0
+    HugeInt operator*(const HugeInt &other) const;
+    HugeInt operator/(const HugeInt &other) const; // integer division
+
+    // comparisons
+    bool operator==(const HugeInt &other) const;
+    bool operator!=(const HugeInt &other) const;
+    bool operator<(const HugeInt &other) const;
+    bool operator<=(const HugeInt &other) const;
+    bool operator>(const HugeInt &other) const;
+    bool operator>=(const HugeInt &other) const;
+
+private:
+    int digits[MAX_DIGITS]; // digits[0] = units (least significant)
+
+    // helpers
+    void fromString(const std::string &s);   // fill digits[] from decimal string
+    std::string toString() const;            // produce decimal string (no leading zeros)
+    int highestNonzeroIndex() const;         // -1 for zero
+    int compareMagnitude(const HugeInt &other) const; // -1,0,1
+};
+
+#endif // HUGEINT_H

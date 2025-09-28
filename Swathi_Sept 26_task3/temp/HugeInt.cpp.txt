@@ -1,0 +1,304 @@
+// HugeInt.cpp
+// Implementation of HugeInt
+
+#include "HugeInt.h"
+#include <vector>
+#include <algorithm>
+#include <stdexcept>
+#include <sstream>
+#include <cctype>
+#include <iostream>
+
+// ---------- constructors ----------
+HugeInt::HugeInt(long long value) {
+    std::string s = std::to_string((value < 0) ? -value : value);
+    fromString(s);
+}
+
+HugeInt::HugeInt(const std::string &s) {
+    fromString(s);
+}
+
+// ---------- helpers ----------
+void HugeInt::fromString(const std::string &s_in) {
+    // Accept only digits (ignore leading/trailing spaces). No sign support.
+    std::string s;
+    for (char c : s_in) if (!std::isspace((unsigned char)c)) s.push_back(c);
+
+    // empty -> zero
+    if (s.empty()) s = "0";
+
+    // remove any leading '+' sign, do not accept '-'
+    if (s[0] == '+') s.erase(s.begin());
+    if (!s.empty() && s[0] == '-') {
+        // negative not supported; set to zero
+        std::cerr << "HugeInt: negative input not supported; set to 0\n";
+        s = "0";
+    }
+
+    // strip any non-digit (defensive). Prefer to require clean input in production.
+    for (char c : s) {
+        if (!std::isdigit((unsigned char)c)) {
+            std::cerr << "HugeInt: non-digit found in input; treating as 0\n";
+            s = "0";
+            break;
+        }
+    }
+
+    // zero the digits
+    for (int i = 0; i < MAX_DIGITS; ++i) digits[i] = 0;
+
+    // If input too long -> overflow of capacity. We'll keep the least significant MAX_DIGITS digits
+    // (i.e., truncate more-significant digits) and report overflow.
+    if ((int)s.size() > MAX_DIGITS) {
+        std::cerr << "HugeInt: input truncated to last " << MAX_DIGITS << " digits\n";
+    }
+
+    // fill digits (LSD at index 0)
+    int pos = 0;
+    for (int i = (int)s.size() - 1; i >= 0 && pos < MAX_DIGITS; --i, ++pos) {
+        digits[pos] = s[i] - '0';
+    }
+}
+
+std::string HugeInt::toString() const {
+    int hi = highestNonzeroIndex();
+    if (hi < 0) return "0";
+    std::string s;
+    s.reserve(hi + 1);
+    for (int i = hi; i >= 0; --i) s.push_back(char('0' + digits[i]));
+    return s;
+}
+
+int HugeInt::highestNonzeroIndex() const {
+    for (int i = MAX_DIGITS - 1; i >= 0; --i)
+        if (digits[i] != 0) return i;
+    return -1; // zero
+}
+
+int HugeInt::compareMagnitude(const HugeInt &other) const {
+    int a_hi = highestNonzeroIndex();
+    int b_hi = other.highestNonzeroIndex();
+    if (a_hi < 0 && b_hi < 0) return 0; // both zero
+    if (a_hi > b_hi) return 1;
+    if (a_hi < b_hi) return -1;
+    // same length -> compare digits from MSD to LSD
+    for (int i = a_hi; i >= 0; --i) {
+        if (digits[i] > other.digits[i]) return 1;
+        if (digits[i] < other.digits[i]) return -1;
+    }
+    return 0;
+}
+
+// ---------- arithmetic ----------
+HugeInt HugeInt::operator+(const HugeInt &other) const {
+    HugeInt result;
+    int carry = 0;
+    for (int i = 0; i < MAX_DIGITS; ++i) {
+        int sum = digits[i] + other.digits[i] + carry;
+        result.digits[i] = sum % 10;
+        carry = sum / 10;
+    }
+    if (carry != 0) {
+        std::cerr << "HugeInt::operator+: overflow (result truncated to "
+                  << MAX_DIGITS << " digits)\n";
+        // result is truncated (least significant MAX_DIGITS digits kept)
+    }
+    return result;
+}
+
+HugeInt HugeInt::operator-(const HugeInt &other) const {
+    // If *this < other, we choose to return zero (textbook versions often assume caller
+    // ensures a >= b before subtraction). This is documented in the README/answers.
+    if (compareMagnitude(other) < 0) {
+        // negative result not supported
+        HugeInt zero("0");
+        return zero;
+    }
+    HugeInt result;
+    int borrow = 0;
+    for (int i = 0; i < MAX_DIGITS; ++i) {
+        int diff = digits[i] - other.digits[i] - borrow;
+        if (diff < 0) {
+            diff += 10;
+            borrow = 1;
+        } else borrow = 0;
+        result.digits[i] = diff;
+    }
+    // no overflow possible; result is non-negative
+    return result;
+}
+
+HugeInt HugeInt::operator*(const HugeInt &other) const {
+    // schoolbook multiplication using temporary array (size 2*MAX_DIGITS)
+    std::vector<int> temp(2 * MAX_DIGITS, 0);
+    for (int i = 0; i < MAX_DIGITS; ++i) {
+        if (digits[i] == 0) continue;
+        for (int j = 0; j < MAX_DIGITS; ++j) {
+            if (other.digits[j] == 0) continue;
+            temp[i + j] += digits[i] * other.digits[j];
+        }
+    }
+    // normalize carries
+    for (size_t k = 0; k + 1 < temp.size(); ++k) {
+        int carry = temp[k] / 10;
+        temp[k] %= 10;
+        temp[k + 1] += carry;
+    }
+
+    // check overflow: any non-zero digit beyond index MAX_DIGITS-1
+    bool overflow = false;
+    for (int k = MAX_DIGITS; k < (int)temp.size(); ++k) {
+        if (temp[k] != 0) {
+            overflow = true;
+            break;
+        }
+    }
+
+    HugeInt product("0");
+    // copy least-significant MAX_DIGITS digits into product
+    for (int k = 0; k < MAX_DIGITS; ++k) product.digits[k] = temp[k];
+
+    if (overflow) {
+        std::cerr << "HugeInt::operator*: overflow (product truncated to "
+                  << MAX_DIGITS << " digits)\n";
+    }
+    return product;
+}
+
+// ---------- division (integer division) ----------
+HugeInt HugeInt::operator/(const HugeInt &divisor) const {
+    // division by zero check
+    if (divisor.highestNonzeroIndex() < 0) {
+        throw std::invalid_argument("HugeInt::operator/: division by zero");
+    }
+
+    // Convert this and divisor to MSD-ordered vectors for easy long division:
+    auto toMSD = [](const HugeInt &h) {
+        std::vector<int> v;
+        int hi = h.highestNonzeroIndex();
+        if (hi < 0) { v.push_back(0); return v; }
+        v.reserve(hi + 1);
+        for (int i = hi; i >= 0; --i) v.push_back(h.digits[i]); // MSD..LSD
+        return v;
+    };
+
+    auto removeLeadingZeros = [](std::vector<int> &v) {
+        while (v.size() > 1 && v.front() == 0) v.erase(v.begin());
+    };
+
+    auto cmpVec = [](const std::vector<int> &a, const std::vector<int> &b) {
+        if (a.size() > b.size()) return 1;
+        if (a.size() < b.size()) return -1;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (a[i] > b[i]) return 1;
+            if (a[i] < b[i]) return -1;
+        }
+        return 0;
+    };
+
+    auto multiplyVecByDigit = [&](const std::vector<int> &v, int d) {
+        std::vector<int> r;
+        r.resize(v.size() + 1, 0); // possible carry
+        int carry = 0;
+        for (int i = (int)v.size() - 1, j = (int)r.size() - 1; i >= 0; --i, --j) {
+            int prod = v[i] * d + carry;
+            r[j] = prod % 10;
+            carry = prod / 10;
+        }
+        r[0] = carry;
+        removeLeadingZeros(r);
+        return r;
+    };
+
+    auto subtractVec = [&](std::vector<int> a, const std::vector<int> &b) {
+        // assumes a >= b; both MSD..LSD
+        std::vector<int> res(a.size(), 0);
+        int ai = (int)a.size() - 1;
+        int bi = (int)b.size() - 1;
+        int ri = (int)res.size() - 1;
+        int borrow = 0;
+        while (ri >= 0) {
+            int av = (ai >= 0) ? a[ai] : 0;
+            int bv = (bi >= 0) ? b[bi] : 0;
+            int diff = av - bv - borrow;
+            if (diff < 0) { diff += 10; borrow = 1; } else borrow = 0;
+            res[ri] = diff;
+            --ai; --bi; --ri;
+        }
+        removeLeadingZeros(res);
+        return res;
+    };
+
+    std::vector<int> A = toMSD(*this);
+    std::vector<int> B = toMSD(divisor);
+    removeLeadingZeros(A);
+    removeLeadingZeros(B);
+
+    // If dividend < divisor -> quotient 0
+    if (cmpVec(A, B) < 0) return HugeInt("0");
+
+    std::vector<int> quotient;
+    std::vector<int> remainder; // MSD..LSD
+
+    for (size_t idx = 0; idx < A.size(); ++idx) {
+        // append next digit to remainder
+        remainder.push_back(A[idx]);
+        removeLeadingZeros(remainder);
+
+        // find maximum qdigit in 0..9 where B*qdigit <= remainder
+        int qdigit = 0;
+        for (int trial = 1; trial <= 9; ++trial) {
+            std::vector<int> prod = multiplyVecByDigit(B, trial);
+            if (cmpVec(prod, remainder) <= 0) qdigit = trial;
+            else break;
+        }
+
+        quotient.push_back(qdigit);
+        if (qdigit != 0) {
+            std::vector<int> prod = multiplyVecByDigit(B, qdigit);
+            remainder = subtractVec(remainder, prod);
+        }
+        // continue to next digit
+    }
+
+    // quotient currently MSD..LSD, convert to HugeInt
+    // Build a string from quotient digits:
+    std::ostringstream oss;
+    bool allZero = true;
+    for (int d : quotient) if (d != 0) { allZero = false; break; }
+    if (allZero) return HugeInt("0");
+    for (int d : quotient) oss << char('0' + d);
+    std::string qstr = oss.str();
+
+    // If quotient has more digits than MAX_DIGITS -> overflow/truncation
+    if ((int)qstr.size() > MAX_DIGITS) {
+        std::cerr << "HugeInt::operator/: quotient truncated to " << MAX_DIGITS << " digits\n";
+        // keep least significant digits: take last MAX_DIGITS digits
+        qstr = qstr.substr(qstr.size() - MAX_DIGITS);
+    }
+
+    HugeInt quotientObj(qstr);
+    return quotientObj;
+}
+
+// ---------- comparisons ----------
+bool HugeInt::operator==(const HugeInt &other) const { return compareMagnitude(other) == 0; }
+bool HugeInt::operator!=(const HugeInt &other) const { return compareMagnitude(other) != 0; }
+bool HugeInt::operator<(const HugeInt &other) const { return compareMagnitude(other) < 0; }
+bool HugeInt::operator<=(const HugeInt &other) const { return compareMagnitude(other) <= 0; }
+bool HugeInt::operator>(const HugeInt &other) const { return compareMagnitude(other) > 0; }
+bool HugeInt::operator>=(const HugeInt &other) const { return compareMagnitude(other) >= 0; }
+
+// ---------- stream operators ----------
+std::ostream &operator<<(std::ostream &out, const HugeInt &h) {
+    out << h.toString();
+    return out;
+}
+
+std::istream &operator>>(std::istream &in, HugeInt &h) {
+    std::string s;
+    in >> s;
+    h.fromString(s);
+    return in;
+}
