@@ -1,0 +1,55 @@
+// Complex.cpp
+// Member function definitions for Complex class
+#include <iostream>
+#include "Complex.h"
+using namespace std;
+
+// constructor
+Complex::Complex(double realPart, double imaginaryPart)
+    : real(realPart), imaginary(imaginaryPart) {}
+
+// addition
+Complex Complex::operator+(const Complex &operand2) const
+{
+    return Complex(real + operand2.real, imaginary + operand2.imaginary);
+}
+
+// subtraction
+Complex Complex::operator-(const Complex &operand2) const
+{
+    return Complex(real - operand2.real, imaginary - operand2.imaginary);
+}
+
+// multiplication
+Complex Complex::operator*(const Complex &operand2) const
+{
+    double r = (real * operand2.real) - (imaginary * operand2.imaginary);
+    double i = (real * operand2.imaginary) + (imaginary * operand2.real);
+    return Complex(r, i);
+}
+
+// equality
+bool Complex::operator==(const Complex &operand2) const
+{
+    return (real == operand2.real && imaginary == operand2.imaginary);
+}
+
+// inequality
+bool Complex::operator!=(const Complex &operand2) const
+{
+    return !(*this == operand2);
+}
+
+// output operator
+ostream &operator<<(ostream &out, const Complex &c)
+{
+    out << "(" << c.real << ", " << c.imaginary << ")";
+    return out;
+}
+
+// input operator
+istream &operator>>(istream &in, Complex &c)
+{
+    in >> c.real >> c.imaginary;
+    return in;
+}

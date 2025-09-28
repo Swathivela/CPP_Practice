@@ -1,0 +1,34 @@
+// main.cpp
+// Test program for Complex class
+#include <iostream>
+#include "Complex.h"
+using namespace std;
+
+int main()
+{
+    Complex x, y, z;
+
+    cout << "Enter first complex number (real imaginary): ";
+    cin >> x;
+
+    cout << "Enter second complex number (real imaginary): ";
+    cin >> y;
+
+    cout << "\nYou entered:\n";
+    cout << "x = " << x << "\ny = " << y << endl;
+
+    z = x + y;
+    cout << "\nAddition (x + y) = " << z << endl;
+
+    z = x - y;
+    cout << "Subtraction (x - y) = " << z << endl;
+
+    z = x * y;
+    cout << "Multiplication (x * y) = " << z << endl;
+
+    cout << "\nComparisons:\n";
+    cout << "x == y ? " << (x == y ? "true" : "false") << endl;
+    cout << "x != y ? " << (x != y ? "true" : "false") << endl;
+
+    return 0;
+}
