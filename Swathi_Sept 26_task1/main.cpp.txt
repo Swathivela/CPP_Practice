@@ -1,0 +1,32 @@
+// main.cpp
+// Test program for DoubleSubscriptedArray
+#include <iostream>
+#include "DoubleSubscriptedArray.h"
+using namespace std;
+
+int main()
+{
+    DoubleSubscriptedArray a(3, 4); // 3x4 array
+    DoubleSubscriptedArray b(3, 4);
+
+    cout << "Enter 12 integers for array a (3x4):\n";
+    cin >> a;
+
+    cout << "\nArray a is:\n" << a;
+
+    cout << "\nAssigning array a to array b...\n";
+    b = a;
+
+    cout << "Array b is:\n" << b;
+
+    cout << "\nTesting equality (a == b): " << (a == b ? "true" : "false") << endl;
+
+    cout << "\nModifying b(1,2) = 100...\n";
+    b(1, 2) = 100;
+
+    cout << "Array b is now:\n" << b;
+
+    cout << "\nTesting inequality (a != b): " << (a != b ? "true" : "false") << endl;
+
+    return 0;
+}

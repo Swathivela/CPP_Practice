@@ -1,0 +1,107 @@
+// DoubleSubscriptedArray.cpp
+// Member function definitions for DoubleSubscriptedArray
+#include <iostream>
+#include <iomanip>
+#include <stdexcept>
+#include "DoubleSubscriptedArray.h"
+using namespace std;
+
+// constructor
+DoubleSubscriptedArray::DoubleSubscriptedArray(int r, int c)
+    : rows(r > 0 ? r : 1), cols(c > 0 ? c : 1)
+{
+    data = new int[rows * cols];
+    for (int i = 0; i < rows * cols; i++)
+        data[i] = 0; // initialize elements to zero
+}
+
+// copy constructor
+DoubleSubscriptedArray::DoubleSubscriptedArray(const DoubleSubscriptedArray &other)
+    : rows(other.rows), cols(other.cols)
+{
+    data = new int[rows * cols];
+    for (int i = 0; i < rows * cols; i++)
+        data[i] = other.data[i];
+}
+
+// destructor
+DoubleSubscriptedArray::~DoubleSubscriptedArray()
+{
+    delete[] data;
+}
+
+// assignment operator
+const DoubleSubscriptedArray &DoubleSubscriptedArray::operator=(const DoubleSubscriptedArray &rhs)
+{
+    if (&rhs != this)
+    {
+        if (rows * cols != rhs.rows * rhs.cols)
+        {
+            delete[] data;
+            rows = rhs.rows;
+            cols = rhs.cols;
+            data = new int[rows * cols];
+        }
+        for (int i = 0; i < rows * cols; i++)
+            data[i] = rhs.data[i];
+    }
+    return *this;
+}
+
+// equality operator
+bool DoubleSubscriptedArray::operator==(const DoubleSubscriptedArray &rhs) const
+{
+    if (rows != rhs.rows || cols != rhs.cols)
+        return false;
+
+    for (int i = 0; i < rows * cols; i++)
+    {
+        if (data[i] != rhs.data[i])
+            return false;
+    }
+    return true;
+}
+
+// inequality operator
+bool DoubleSubscriptedArray::operator!=(const DoubleSubscriptedArray &rhs) const
+{
+    return !(*this == rhs);
+}
+
+// operator() for non-const objects
+int &DoubleSubscriptedArray::operator()(int row, int col)
+{
+    if (row < 0 || row >= rows || col < 0 || col >= cols)
+        throw out_of_range("Subscript out of range");
+    return data[row * cols + col];
+}
+
+// operator() for const objects
+const int &DoubleSubscriptedArray::operator()(int row, int col) const
+{
+    if (row < 0 || row >= rows || col < 0 || col >= cols)
+        throw out_of_range("Subscript out of range");
+    return data[row * cols + col];
+}
+
+// output operator
+ostream &operator<<(ostream &out, const DoubleSubscriptedArray &a)
+{
+    for (int i = 0; i < a.rows; i++)
+    {
+        for (int j = 0; j < a.cols; j++)
+        {
+            out << setw(4) << a(i, j);
+        }
+        out << '\n';
+    }
+    return out;
+}
+
+// input operator
+istream &operator>>(istream &in, DoubleSubscriptedArray &a)
+{
+    for (int i = 0; i < a.rows * a.cols; i++)
+        in >> a.data[i];
+    return in;
+}

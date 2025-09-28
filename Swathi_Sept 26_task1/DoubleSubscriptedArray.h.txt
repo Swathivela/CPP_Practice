@@ -1,0 +1,42 @@
+// DoubleSubscriptedArray.h
+// Class definition for DoubleSubscriptedArray
+#ifndef DOUBLESUBSCRIPTEDARRAY_H
+#define DOUBLESUBSCRIPTEDARRAY_H
+
+#include <iostream>
+using namespace std;
+
+class DoubleSubscriptedArray
+{
+public:
+    // constructor
+    DoubleSubscriptedArray(int rows = 1, int cols = 1);
+
+    // copy constructor
+    DoubleSubscriptedArray(const DoubleSubscriptedArray &other);
+
+    // destructor
+    ~DoubleSubscriptedArray();
+
+    // assignment operator
+    const DoubleSubscriptedArray &operator=(const DoubleSubscriptedArray &rhs);
+
+    // equality / inequality operators
+    bool operator==(const DoubleSubscriptedArray &rhs) const;
+    bool operator!=(const DoubleSubscriptedArray &rhs) const;
+
+    // subscript operator overloads (double-subscripted)
+    int &operator()(int row, int col);       // non-const lvalue
+    const int &operator()(int row, int col) const; // const version
+
+    // input and output operators
+    friend ostream &operator<<(ostream &out, const DoubleSubscriptedArray &a);
+    friend istream &operator>>(istream &in, DoubleSubscriptedArray &a);
+
+private:
+    int rows;
+    int cols;
+    int *data; // single array of size rows*cols
+};
+
+#endif
