@@ -1,0 +1,144 @@
+// Polynomial.cpp
+// Polynomial class member-function definitions
+
+#include "Polynomial.h"
+#include <algorithm>
+using namespace std;
+
+// default constructor
+Polynomial::Polynomial() {}
+
+// copy constructor
+Polynomial::Polynomial(const Polynomial &other) : terms(other.terms) {}
+
+// destructor
+Polynomial::~Polynomial() {}
+
+// assignment operator
+Polynomial& Polynomial::operator=(const Polynomial &other) {
+    if (this != &other) {
+        terms = other.terms;
+    }
+    return *this;
+}
+
+// add a term
+void Polynomial::addTerm(int coefficient, int exponent) {
+    if (coefficient != 0) {
+        terms.push_back({coefficient, exponent});
+        simplify();
+    }
+}
+
+// get coefficient of exponent
+int Polynomial::getCoefficient(int exponent) const {
+    for (const auto &term : terms) {
+        if (term.exponent == exponent) {
+            return term.coefficient;
+        }
+    }
+    return 0;
+}
+
+// simplify polynomial (combine like terms and sort)
+void Polynomial::simplify() {
+    // combine like terms
+    vector<Term> combined;
+    sort(terms.begin(), terms.end(),
+         [](const Term &a, const Term &b) { return a.exponent > b.exponent; });
+
+    for (const auto &term : terms) {
+        if (!combined.empty() && combined.back().exponent == term.exponent) {
+            combined.back().coefficient += term.coefficient;
+        } else {
+            combined.push_back(term);
+        }
+    }
+
+    // remove zero coefficient terms
+    terms.clear();
+    for (const auto &term : combined) {
+        if (term.coefficient != 0)
+            terms.push_back(term);
+    }
+}
+
+// operator +
+Polynomial Polynomial::operator+(const Polynomial &rhs) const {
+    Polynomial result(*this);
+    for (const auto &term : rhs.terms) {
+        result.addTerm(term.coefficient, term.exponent);
+    }
+    result.simplify();
+    return result;
+}
+
+// operator -
+Polynomial Polynomial::operator-(const Polynomial &rhs) const {
+    Polynomial result(*this);
+    for (const auto &term : rhs.terms) {
+        result.addTerm(-term.coefficient, term.exponent);
+    }
+    result.simplify();
+    return result;
+}
+
+// operator *
+Polynomial Polynomial::operator*(const Polynomial &rhs) const {
+    Polynomial result;
+    for (const auto &t1 : terms) {
+        for (const auto &t2 : rhs.terms) {
+            result.addTerm(t1.coefficient * t2.coefficient,
+                           t1.exponent + t2.exponent);
+        }
+    }
+    result.simplify();
+    return result;
+}
+
+// operator +=
+Polynomial& Polynomial::operator+=(const Polynomial &rhs) {
+    *this = *this + rhs;
+    return *this;
+}
+
+// operator -=
+Polynomial& Polynomial::operator-=(const Polynomial &rhs) {
+    *this = *this - rhs;
+    return *this;
+}
+
+// operator *=
+Polynomial& Polynomial::operator*=(const Polynomial &rhs) {
+    *this = *this * rhs;
+    return *this;
+}
+
+// output operator <<
+ostream& operator<<(ostream &out, const Polynomial &poly) {
+    if (poly.terms.empty()) {
+        out << "0";
+        return out;
+    }
+    for (size_t i = 0; i < poly.terms.size(); ++i) {
+        const auto &t = poly.terms[i];
+        if (i > 0 && t.coefficient > 0) out << " + ";
+        else if (t.coefficient < 0) out << " - ";
+        out << abs(t.coefficient);
+        if (t.exponent != 0) out << "x^" << t.exponent;
+    }
+    return out;
+}
+
+// input operator >>
+istream& operator>>(istream &in, Polynomial &poly) {
+    int n;
+    in >> n; // number of terms
+    for (int i = 0; i < n; ++i) {
+        int coeff, exp;
+        in >> coeff >> exp;
+        poly.addTerm(coeff, exp);
+    }
+    poly.simplify();
+    return in;
+}

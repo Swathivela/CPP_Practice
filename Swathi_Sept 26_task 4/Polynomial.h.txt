@@ -1,0 +1,48 @@
+// Polynomial.h
+// Polynomial class definition
+
+#ifndef POLYNOMIAL_H
+#define POLYNOMIAL_H
+
+#include <iostream>
+#include <vector>
+
+class Polynomial {
+public:
+    // term structure
+    struct Term {
+        int coefficient;
+        int exponent;
+    };
+
+    // constructors & destructor
+    Polynomial();                      // default constructor
+    Polynomial(const Polynomial &);    // copy constructor
+    ~Polynomial();                     // destructor
+
+    // assignment operator
+    Polynomial& operator=(const Polynomial &);
+
+    // set & get
+    void addTerm(int coefficient, int exponent);
+    int getCoefficient(int exponent) const;
+
+    // overloaded operators
+    Polynomial operator+(const Polynomial &) const;   // addition
+    Polynomial operator-(const Polynomial &) const;   // subtraction
+    Polynomial operator*(const Polynomial &) const;   // multiplication
+
+    Polynomial& operator+=(const Polynomial &);       // addition assignment
+    Polynomial& operator-=(const Polynomial &);       // subtraction assignment
+    Polynomial& operator*=(const Polynomial &);       // multiplication assignment
+
+    // I/O operators
+    friend std::ostream& operator<<(std::ostream &, const Polynomial &);
+    friend std::istream& operator>>(std::istream &, Polynomial &);
+
+private:
+    std::vector<Term> terms;  // dynamic list of terms
+    void simplify();          // combine like terms and clean up
+};
+
+#endif

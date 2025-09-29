@@ -1,0 +1,37 @@
+// main.cpp
+// Polynomial class test program
+
+#include <iostream>
+#include "Polynomial.h"
+using namespace std;
+
+int main() {
+    Polynomial p1, p2;
+
+    cout << "Enter first polynomial (format: n coeff exp ...): ";
+    cin >> p1;
+
+    cout << "Enter second polynomial (format: n coeff exp ...): ";
+    cin >> p2;
+
+    cout << "\nP1(x) = " << p1 << endl;
+    cout << "P2(x) = " << p2 << endl;
+
+    cout << "\nP1 + P2 = " << (p1 + p2) << endl;
+    cout << "P1 - P2 = " << (p1 - p2) << endl;
+    cout << "P1 * P2 = " << (p1 * p2) << endl;
+
+    Polynomial p3 = p1;
+    p3 += p2;
+    cout << "\nP3 = P1; P3 += P2 -> " << p3 << endl;
+
+    p3 = p1;
+    p3 -= p2;
+    cout << "P3 = P1; P3 -= P2 -> " << p3 << endl;
+
+    p3 = p1;
+    p3 *= p2;
+    cout << "P3 = P1; P3 *= P2 -> " << p3 << endl;
+
+    return 0;
+}
